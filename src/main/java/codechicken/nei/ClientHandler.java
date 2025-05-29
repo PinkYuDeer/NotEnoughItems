@@ -338,6 +338,7 @@ public class ClientHandler {
         Minecraft mc = Minecraft.getMinecraft();
         if (event.world == mc.theWorld) {
             NEIClientConfig.unloadWorld();
+            ItemMobSpawner.clearEntityReferences();
         }
     }
 
@@ -354,8 +355,6 @@ public class ClientHandler {
                 if (!Minecraft.getMinecraft().isSingleplayer()) // wait for server to initiate in singleplayer
                     NEIClientConfig.loadWorld("remote/" + ClientUtils.getServerIP().replace(':', '~'));
             }
-            ItemMobSpawner.clearEntityReferences(world);
-
             lastworld = world;
         }
     }
