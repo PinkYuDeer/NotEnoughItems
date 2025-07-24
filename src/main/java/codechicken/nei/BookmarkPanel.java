@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -304,20 +305,46 @@ public class BookmarkPanel extends PanelWidget<BookmarkGrid> {
         final RecipeId recipeId = slot.getRecipeId();
         final BookmarkGroup group = slot.getGroup();
 
-        if (recipeId == null || !removeFullRecipe) {
-            this.grid.removeRecipe(slot.itemIndex, removeFullRecipe);
+        if (group.crafting != null && group.collapsed) {
 
+            if (!removeFullRecipe) {
+                return true;
+            }
+
+            this.grid.removeGroup(groupId);
             return true;
         }
 
-        if (group.crafting != null && group.crafting.recipeRelations.containsKey(recipeId)) {
-            boolean removed = false;
+        if (recipeId != null && group.crafting != null) {
+            Set<RecipeId> recipes = group.crafting.recipeRelations.getOrDefault(recipeId, Collections.emptySet());
 
-            for (RecipeId relRecipeId : group.crafting.recipeRelations.get(recipeId)) {
-                removed = this.grid.removeRecipe(relRecipeId, groupId) || removed;
+            if (recipes.isEmpty()) {
+                for (Map.Entry<RecipeId, Set<RecipeId>> entry : group.crafting.recipeRelations.entrySet()) {
+                    if (entry.getValue().contains(recipeId)) {
+                        recipes = entry.getValue();
+                        break;
+                    }
+                }
             }
 
-            return removed;
+            if (!recipes.isEmpty()) {
+
+                if (!removeFullRecipe) {
+                    return true;
+                }
+
+                boolean removed = false;
+                for (RecipeId relRecipeId : recipes) {
+                    removed = this.grid.removeRecipe(relRecipeId, groupId) || removed;
+                }
+
+                return removed;
+            }
+        }
+
+        if (recipeId == null || !removeFullRecipe) {
+            this.grid.removeRecipe(slot.itemIndex, removeFullRecipe);
+            return true;
         }
 
         return this.grid.removeRecipe(recipeId, groupId);
@@ -1151,6 +1178,11 @@ public class BookmarkPanel extends PanelWidget<BookmarkGrid> {
         }
 
         return true;
+    }
+
+    public void clearTooltips() {
+        this.acceptsFollowingTooltipLineHandler = null;
+        this.recipeChainTooltipLineHandler = null;
     }
 
     @Deprecated

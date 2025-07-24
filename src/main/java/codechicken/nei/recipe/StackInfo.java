@@ -30,6 +30,7 @@ public class StackInfo {
     private static final Map<String, HashMap<String, String[]>> guidfilters = new HashMap<>();
     private static final ItemStackMap<String> guidcache = new ItemStackMap<>();
     private static final LRUCache<ItemStackKey, FluidStack> fluidcache = new LRUCache<>(200);
+    private static boolean isPausedItemDamageSound = false;
 
     static {
         stackStringifyHandlers.add(new DefaultStackStringifyHandler());
@@ -71,6 +72,18 @@ public class StackInfo {
         }
 
         return stack;
+    }
+
+    public static void pauseItemDamageSound(boolean pause) {
+        if (isPausedItemDamageSound != (isPausedItemDamageSound = pause)) {
+            for (IStackStringifyHandler handler : stackStringifyHandlers) {
+                handler.pauseItemDamageSound(pause);
+            }
+        }
+    }
+
+    public static boolean isPausedItemDamageSound() {
+        return isPausedItemDamageSound;
     }
 
     public static ItemStack withAmount(ItemStack stack, long customCount) {
